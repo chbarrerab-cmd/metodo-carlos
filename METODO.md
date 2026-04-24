@@ -73,6 +73,11 @@ Si hay duda, preguntar antes de actuar.
 
 ---
 
+### R14 — Briefs para Claude Code siempre en artefacto
+Cualquier instrucción o brief destinado a Claude Code va en un artefacto (archivo presentable), nunca inline en el chat. Esto aplica a todos los proyectos.
+
+---
+
 ## Convenciones técnicas (entorno de Carlos)
 
 - SO: macOS (MacBook Pro M5 Pro)
