@@ -76,6 +76,17 @@ Si hay duda, preguntar antes de actuar.
 ### R14 — Briefs para Claude Code siempre en artefacto
 Cualquier instrucción o brief destinado a Claude Code va en un artefacto (archivo presentable), nunca inline en el chat. Esto aplica a todos los proyectos.
 
+
+### R15 — Bug encontrado = revisar todos los lugares donde podría existir
+Cuando se identifica la causa raíz de un bug, Claude debe proactivamente:
+1. Identificar el patrón técnico subyacente (no solo el síntoma puntual).
+2. Buscar todos los otros lugares del código donde ese mismo patrón pueda estar causando bugs latentes.
+3. Proponer un fix integral que cubra todos los casos, no solo el reportado.
+
+Ejemplos de patrones que aplican: límites de paginación, manejo de errores, validaciones de input, race conditions, cálculos derivados de datos potencialmente faltantes, queries con relaciones anidadas.
+
+Nunca cerrar un bug sin haber revisado si vive en otros niveles del modelo. La regla es: un bug reportado es la punta del iceberg hasta que se demuestre lo contrario.
+
 ---
 
 ## Convenciones técnicas (entorno de Carlos)
