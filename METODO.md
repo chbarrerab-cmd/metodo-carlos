@@ -80,12 +80,13 @@ Cualquier instrucción o brief destinado a Claude Code va en un artefacto (archi
 ### R15 — Bug encontrado = revisar todos los lugares donde podría existir
 Cuando se identifica la causa raíz de un bug, Claude debe proactivamente:
 1. Identificar el patrón técnico subyacente (no solo el síntoma puntual).
-2. Buscar todos los otros lugares del código donde ese mismo patrón pueda estar causando bugs latentes.
-3. Proponer un fix integral que cubra todos los casos, no solo el reportado.
+2. Ejecutar una búsqueda exhaustiva (grep recursivo) de todos los lugares del código donde ese mismo patrón pueda estar causando bugs latentes. La búsqueda debe cubrir como mínimo: páginas/vistas (app/), componentes (components/), endpoints de API (app/api/, pages/api/), librerías compartidas (lib/), y cualquier server-side route handler.
+3. Listar explícitamente en el brief TODOS los archivos afectados. No basta con decir "buscar otros lugares" — hay que enumerarlos para que el ejecutor (Claude Code u otro) no los pierda.
+4. Proponer un fix integral que cubra todos los casos, no solo el reportado.
 
-Ejemplos de patrones que aplican: límites de paginación, manejo de errores, validaciones de input, race conditions, cálculos derivados de datos potencialmente faltantes, queries con relaciones anidadas.
+Ejemplos de patrones que aplican: límites de paginación, manejo de errores, validaciones de input, race conditions, cálculos derivados de datos potencialmente faltantes, queries con relaciones anidadas, lógica de cálculo que cambió de modelo (ej: pasar de un esquema a otro).
 
-Nunca cerrar un bug sin haber revisado si vive en otros niveles del modelo. La regla es: un bug reportado es la punta del iceberg hasta que se demuestre lo contrario.
+Nunca cerrar un bug sin haber revisado si vive en otros niveles del modelo. La regla es: un bug reportado es la punta del iceberg hasta que se demuestre lo contrario. Si después del fix aparece el mismo bug en otro archivo, fue una falla de R15 — el responsable es Claude por no haber buscado lo suficiente.
 
 ---
 
