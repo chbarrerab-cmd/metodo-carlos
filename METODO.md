@@ -88,6 +88,41 @@ Ejemplos de patrones que aplican: límites de paginación, manejo de errores, va
 
 Nunca cerrar un bug sin haber revisado si vive en otros niveles del modelo. La regla es: un bug reportado es la punta del iceberg hasta que se demuestre lo contrario. Si después del fix aparece el mismo bug en otro archivo, fue una falla de R15 — el responsable es Claude por no haber buscado lo suficiente.
 
+### R16 — Cierre de sesión = actualizar "Estado actual del proyecto"
+
+Al cierre de cada sesión, Claude debe:
+
+1. **Actualizar la sección "Estado actual del proyecto"** del PROYECTO.md
+   del proyecto activo (al inicio del archivo, justo después del título).
+   Esa sección es la fuente de verdad del estado entre sesiones.
+
+2. **Pegar esa misma sección al final del chat** como bloque copiable,
+   con el header "=== Estado actual del proyecto ===". Es copia exacta
+   de PROYECTO.md, no una redacción paralela. Carlos la pega al inicio
+   del chat siguiente como atajo para no abrir el .md.
+
+**Contenido de la sección** (criterio de Claude según la sesión):
+
+Mínimo siempre presente:
+- Fase activa.
+- Último commit relevante (hash + mensaje).
+- Próximo paso concreto.
+
+Agregar según corresponda:
+- Decisiones cerradas en la sesión que afectan al próximo paso.
+- Pendientes inmediatos no obvios desde el commit.
+- Caveats operativos vivos (ej. smoke pendiente, deploy pendiente).
+
+**Sin redundancia con el historial**. La sección NO repite lo que ya
+está en `docs/historial-sesiones.md` o en la sección "Pendientes" del
+PROYECTO.md. Solo el estado mínimo para retomar sin releer toda la
+bitácora.
+
+**Si la sesión no tocó código** (planificación, decisiones, debug
+sin fix): igual se actualiza la sección. El "último commit relevante"
+puede seguir siendo el mismo de la sesión anterior; lo que cambia es
+el "próximo paso" o las "decisiones cerradas".
+
 ---
 
 ## Convenciones técnicas (entorno de Carlos)
