@@ -123,6 +123,15 @@ sin fix): igual se actualiza la sección. El "último commit relevante"
 puede seguir siendo el mismo de la sesión anterior; lo que cambia es
 el "próximo paso" o las "decisiones cerradas".
 
+**Sobre el "Último commit relevante"**: típicamente apunta al commit
+sustantivo de la sesión (el que dejó el cambio funcional), no al
+commit de cierre que actualiza esta misma sección. Si la sesión
+tuvo un solo commit y ese commit incluye la actualización de la
+sección, ejecutar el commit primero con placeholder `<hash>` y
+después `git commit --amend` con el hash real, o simplemente dejar
+el hash del commit anterior si la actualización de la sección es lo
+único que viene en el commit de cierre.
+
 ---
 
 ## Convenciones técnicas (entorno de Carlos)
