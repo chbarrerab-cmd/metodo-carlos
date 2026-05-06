@@ -132,6 +132,139 @@ después `git commit --amend` con el hash real, o simplemente dejar
 el hash del commit anterior si la actualización de la sección es lo
 único que viene en el commit de cierre.
 
+### R17 — Scripts largos: archivo descargable, no pegado en terminal
+
+Cuando un script supere ~50 líneas o contenga heredocs anidados,
+comillas mezcladas, backticks o expansiones complejas, **NO entregarlo
+para pegar en terminal**. Entregarlo como artefacto descargable y dar
+instrucciones para ejecutarlo desde archivo:
+
+    bash ~/Downloads/script.sh
+
+Razones:
+
+1. zsh interpreta `!`, `$()`, backticks, antes de que el contenido
+   llegue a bash. Pegar contenido grande en terminal puede romper el
+   script.
+2. Errores de copia (líneas truncadas, encoding) se eliminan.
+3. El archivo queda versionable y re-ejecutable.
+4. Permite validar sintaxis con `bash -n archivo` antes de ejecutar.
+
+Excepción: bloques cortos (<50 líneas, sin heredocs anidados) van
+inline para no fragmentar el flujo.
+
+### R18 — Bloques de rollback con prefijo visual inequívoco
+
+Los bloques de rollback (R8) deben llevar un encabezado visualmente
+distinto que haga **imposible confundirlos con el bloque a ejecutar**.
+Mínimo:
+
+    -- 🔴 ROLLBACK — NO CORRER A MENOS QUE LA OPERACIÓN HAYA FALLADO
+    -- ===========================================================
+
+Y posicionar el rollback **siempre después del bloque a ejecutar**,
+nunca antes ni en medio. La distancia visual y el prefijo 🔴 reducen
+la probabilidad de que se ejecute por error en lugar del bloque
+principal.
+
+### R19 — Script `<proyecto>-ctx` como atajo de R16
+
+Cada proyecto debe tener un script de contexto que genera el bloque
+a pegar al inicio de cada chat nuevo. Reemplaza el copy/paste manual
+del "Estado actual del proyecto" descrito en R16.
+
+**Convenciones de implementación:**
+
+- **Ubicación**: `<repo>/scripts/<proyecto>-ctx.sh` (no en `bin/`).
+  `bin/` sugiere "ejecutables instalables al PATH del sistema";
+  `scripts/` es más claro como "scripts auxiliares del proyecto".
+- **Alias**: corto y memorable (ej: `mimenu-ctx`, `crm-ctx`).
+  Definido en `~/.zshrc` apuntando al path absoluto del script.
+- **Permisos**: `chmod +x` aplicado al script.
+- **Salida**: imprime a stdout Y copia al portapapeles con `pbcopy`.
+- **Mensaje final**: "✓ Copiado al portapapeles. Pega con Cmd+V en el
+  chat nuevo."
+
+**Estructura mínima del bloque generado** — tres secciones fijas en
+este orden:
+
+1. **HEADER**: ruta del repo, último commit (`%h — %s`), branch
+   actual, estado del working tree (limpio/sucio + cantidad de
+   archivos modificados).
+2. **METODO.md**: contenido completo de
+   `~/Proyectos/metodo-carlos/METODO.md`. Path canónico — todos los
+   proyectos asumen que el repo está clonado ahí. Si no existe,
+   mensaje de error claro tipo "(no encontrado en X — clonar
+   chbarrerab-cmd/metodo-carlos)".
+3. **PROYECTO.md**: contenido **completo** del PROYECTO.md del repo
+   (no solo extracto del "Estado actual"). Incluye el historial de
+   sesiones (ver R20).
+
+**Secciones opcionales con flag**: cuando el proyecto tenga fuentes
+de datos en vivo cuya consulta dé info útil al inicio de chat (ej:
+conteos en BD, último deploy, estado de jobs), agregarse detrás de un
+flag opcional. Default sin flag = solo lectura de archivos.
+
+Convenciones para los flags:
+- `--no-copy`: imprime a stdout sin tocar portapapeles.
+- Cualquier otro flag de consulta en vivo: nombre descriptivo
+  (`--bd`, `--vercel`, `--jobs`).
+
+**Por qué embeber docs completos en vez de URLs o extractos**: el
+chat nuevo no tiene acceso a GitHub privado ni puede leer archivos
+del repo del usuario. Si el ctx solo dice "lee metodo-carlos.md", el
+primer turno del chat se gasta pidiendo los archivos manualmente.
+Embebido completo: chat arranca con todo el contexto en un solo
+mensaje. El costo en tokens es aceptable: METODO.md ronda los 3KB,
+PROYECTO.md bien mantenido entre 5KB y 30KB. Total típico <40KB,
+menos del 5% de un context window moderno.
+
+### R20 — Historial de sesiones dentro de PROYECTO.md
+
+El historial de sesiones vive **dentro** de `PROYECTO.md`, en una
+sección al final con título `## 📜 Historial de cambios importantes`.
+No usar `docs/historial-sesiones.md` ni archivos separados.
+
+**Razones:**
+
+- **Una sola fuente de verdad** para el estado del proyecto.
+- **Simplifica el ctx** (R19): un solo archivo a leer.
+- **Reduce desincronización** entre dos archivos que cuentan partes
+  complementarias del mismo estado.
+- **Append-only natural**: cada sesión nueva agrega su entrada al
+  final. El "Estado actual del proyecto" sigue arriba intacto.
+
+**Estructura recomendada de PROYECTO.md:**
+
+    # <Proyecto>
+
+    ## Estado actual del proyecto
+    (sección de R16, fuente de verdad entre sesiones)
+
+    ## Stack / Convenciones / Glosario / etc
+    (secciones estables del proyecto)
+
+    ## Pendientes
+    (lista granular de deuda técnica)
+
+    ## 📜 Historial de cambios importantes
+
+    ### Sesión <fecha> — <título>
+    (entrada de la sesión actual, append al final)
+
+    ### Sesión <fecha anterior> — <título>
+    (entradas anteriores)
+
+**Formato de entradas del historial:**
+
+- Encabezado `### Sesión <fecha legible> — <título descriptivo>`.
+- Bullets con ✅ para hechos, ⏳ para pendiente, ⚠️ para caveats.
+- Cuando una sesión cierra un pendiente listado en "Pendientes",
+  tachar el ítem en esa sección con ~~strikethrough~~ y referenciar
+  la sesión: `~~item~~ ✅ Resuelto en sesión <fecha>`.
+- Sin redundancia: el historial cuenta el "qué pasó", la sección
+  "Estado actual del proyecto" cuenta el "dónde estamos ahora".
+
 ---
 
 ## Convenciones técnicas (entorno de Carlos)
