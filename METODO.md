@@ -265,6 +265,83 @@ No usar `docs/historial-sesiones.md` ni archivos separados.
 - Sin redundancia: el historial cuenta el "qué pasó", la sección
   "Estado actual del proyecto" cuenta el "dónde estamos ahora".
 
+### R21 — Studio no es confiable para transacciones explícitas
+
+El SQL Editor de Supabase Studio rompe el contexto de transacciones
+explícitas (`BEGIN; ... COMMIT;`) y los cuerpos `$$...$$` de
+functions cuando se usa "Run selected" por bloques. Cada selección
+se ejecuta como query independiente, perdiendo el contexto.
+
+**Síntomas conocidos:**
+
+- `42601: unterminated dollar-quoted string at or near "$$"`
+- `42P01: missing FROM-clause entry for table "new"` (NEW solo
+  existe dentro del trigger context, no en queries sueltas).
+- `BEGIN/COMMIT` queda abierto silencioso, los cambios no
+  persisten al reiniciar la sesión.
+
+**Patrón a seguir:**
+
+- **Si la operación es atómica** (`BEGIN; ... COMMIT;` explícito,
+  CREATE FUNCTION con `$$...$$`, migraciones con múltiples ALTER
+  encadenados): ejecutar via `psql` desde Claude Code (CC),
+  pasando todo el bloque de una sola vez. NO usar Studio.
+- **Si es SQL ad-hoc** (un SELECT, un INSERT puntual, una
+  inspección de schema): Studio está bien.
+
+Diagnóstico de la regla: aparece en sesión 40 (gestor-recetas) con
+function + trigger + ALTER en una sola migración, y se repite en
+sesión 41 con un hard-delete atómico. Dos confirmaciones
+independientes de que Studio no es la herramienta para este caso.
+
+### R22 — ON CONFLICT con índices parciales requiere WHERE pred
+
+Cuando el índice único es parcial (ej.
+`UNIQUE INDEX ... WHERE deleted_at IS NULL`), Postgres requiere que
+el `INSERT ... ON CONFLICT` incluya el predicado del índice
+explícitamente. Aplica para `DO NOTHING` y `DO UPDATE` por igual.
+
+**Sintaxis:**
+
+- ❌ `ON CONFLICT (colegio_id, mes, anio) DO NOTHING`
+- ✅ `ON CONFLICT (colegio_id, mes, anio) WHERE deleted_at IS NULL DO NOTHING`
+
+Sin el `WHERE`, Postgres lanza:
+
+`there is no unique or exclusion constraint matching the ON CONFLICT specification`
+
+**Cuándo aplica:** cualquier proyecto que use UNIQUE parciales para
+permitir crear nuevas filas sobre archivadas con soft delete (patrón
+típico en gestor-recetas para minutas, planes, pedidos, etc.).
+
+Diagnóstico de la regla: aparece en sesión 40 dentro de un trigger
+function, donde el error solo se manifiesta en runtime al disparar
+el trigger. Memorizable como par con R21 — ambas vienen de la misma
+sesión y atacan errores que parecen exóticos pero son patrones
+recurrentes.
+
+### R23 — R15 incluye scripts/
+
+R15 (auditoría exhaustiva ante bugs) define el scope de búsqueda
+recursiva al detectar un patrón problemático. La definición
+original lista `app/`, `components/`, `lib/`, `app/api/`. Hay que
+agregar `scripts/`.
+
+**Razón:** scripts de generación, migración, render, seed, etc.,
+suelen replicar patrones de la app (ej. lectura de Supabase,
+helpers compartidos como `loadPorcionesContext`). Si el patrón
+cambia y el grep no incluye `scripts/`, el build los va a detectar
+después como inconsistencia, fragmentando el fix.
+
+**Scope mínimo de R15 actualizado:** `app/`, `components/`, `lib/`,
+`app/api/`, `scripts/`.
+
+Diagnóstico de la regla: aparece en sesión 41 (gestor-recetas), commit 3
+del refactor de `loadPorcionesContext`. El grep inicial reportó "4
+consumers". El build encontró un quinto en `scripts/render-plan-semanal.tsx`.
+Fix integral retroactivo, pero costó un commit extra que se podría
+haber evitado.
+
 ---
 
 ## Convenciones técnicas (entorno de Carlos)
