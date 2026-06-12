@@ -80,6 +80,57 @@ con el OK de Carlos.
 
 ---
 
+## Homologación de UI (estándar transversal de secciones)
+
+Cuando una app acumula inconsistencias entre secciones (botones con formato distinto,
+"volver" que falta o varía, formularios cada uno a su manera, recuadros desalineados), NO
+se arregla pantalla por pantalla — eso deja parches y el problema reaparece. Se homologa
+**por patrón**, una vez para todas las instancias. Pasos:
+
+1. **Inventario exhaustivo primero.** Antes de tocar nada, recorrer TODO (`app/`,
+   `components/`) y listar cada instancia de cada pieza (volver, editar, borrar,
+   agregar/quitar, labels, headers de sección, acción principal) con `archivo:línea` y su
+   estado actual. Útil repartir el barrido en subagentes de solo-lectura. Sin inventario no
+   hay homologación: se arregla lo que se ve y se olvida el resto.
+
+2. **Definir el catálogo de piezas (una sola vez).** Acordar el estándar único de cada
+   pieza: forma, color (token del design system, **nunca** hex hardcodeado), icono, texto,
+   posición. Una pieza = una definición reutilizable.
+
+3. **Mockup-first.** Un "Mockup Tipo" con el catálogo de piezas y los patrones de página
+   (listado simple vs formulario/detalle). Luego mockups por sección "ahora vs propuesto".
+   Aprobar el diseño ANTES de escribir código.
+
+4. **Reglas de aplicación, no solo estética.** Decidir DÓNDE va cada pieza por su
+   semántica, no por copiar. Ej: "volver" solo en páginas a las que se ENTRA (drill-in), no
+   en destinos del menú lateral (no hay a dónde volver). Distinguir piezas que parecen
+   iguales pero son idiomas distintos (botón "agregar fila" de formulario ≠ disparador de
+   popover). Renombrar lo que cumple otro rol (un segundo "Volver" junto al CTA es en
+   realidad "Cancelar").
+
+5. **Componente compartido > repetición.** Cambiar el componente base (botón-volver, tabla,
+   encabezado) propaga el arreglo a decenas de pantallas con un solo edit. Tokenizar los
+   colores nuevos en el design system para que vivan en el tema, no en cada uso.
+
+6. **Barrido en una rama, subagentes por bloque sin solape.** Repartir el trabajo mecánico
+   en grupos de archivos que no se pisen, con el spec exacto del estándar. Reservarse los
+   archivos delicados (wizards con estado, editores complejos) para hacerlos a mano.
+
+7. **Gate + verificación visual antes de cerrar.** Typecheck + lint + tests + build en
+   verde, y screenshot REAL en desktop y mobile de las pantallas clave: la posición de cada
+   pieza debe ser idéntica en ambos anchos. Recién ahí push/PR.
+
+8. **Cerrar con auditoría de conformidad.** Tras mergear, un barrido de solo-lectura que
+   verifique que NINGUNA instancia quedó fuera de norma (es la regla "un bug es la punta del
+   iceberg" aplicada a UI). Lo que aparezca, a la siguiente tanda.
+
+> Trampa de entorno: al introducir un token nuevo de Tailwind/`@theme` y cambiar de rama
+> con el dev server vivo, la utilidad puede no regenerarse y la pieza se ve sin estilo
+> (fondo transparente). El código está bien si el build del CI pasó; la cura local es
+> `rm -rf .next` + reiniciar el dev.
+
+---
+
 ## Modo agéntico (computer use, browser use)
 
 Cuando Claude opera navegador o computador:
